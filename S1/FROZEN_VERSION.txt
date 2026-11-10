@@ -1,0 +1,126 @@
+FROZEN_VERSION  sim2real_20261106/S1   frozen 2026-11-06 13:02:11 -0500
+Runner: cd ~/rl_live/sim2real_20261106/S1/G_place && VERTICAL_DESCENT=1 python3 grasp_hold_norl.py --n <100+trial>   (no RL Reach: reach_start/reach_ladder replaced by logged no-ops, grasp_hold_norl.py:1-30)
+Between trials: G_place/release_and_home.py (open in place, needle drops, back to calibration base); G_place/check_rig.py must print 'OK - ready' (11-04 practice, code/run_three_1104.sh).
+git: none (not a git repository)
+
+== Lineage (each step = copy with path-only edits unless listed in section 'Changes vs 10-28')
+10-28 ~/rl_live/sim2real_20261028 -> 10-30 sim2real_20261030 -> 11-04 sim2real_20261104 -> 11-05 sim2real_20261105/S1,S2,S3 -> today S1 (copy of S3; files edited for the path: path_edit_files.txt; sha256 of the S3 originals: code_SHA256_from_S3.txt)
+deploy -> sim2real_20261105/S1/deploy -> sim2real_20261028/deploy (symlinks; RL actor not used today)
+
+== Changes vs 10-28 package (line counts after normalising the root path)
+  code/attempt.py: 75 changed lines
+  code/autotpl.py: 25 changed lines
+  code/cp_step.py: not in 10-28
+  code/jaw_set.py: not in 10-28
+  code/jaw_track.py: not in 10-28
+  code/nudge_cam.py: not in 10-28
+  code/recover_to_base.py: 4 changed lines
+  code/replay_tpl_1428.py: 2 changed lines
+  code/replay_track_1450.py: 2 changed lines
+  code/retract_ins.py: not in 10-28
+  code/rig.py: 3 changed lines
+  code/session_driver.py: 14 changed lines
+  code/set_joint.py: not in 10-28
+  code/support_map_1600.py: 2 changed lines
+  code/watchdog.py: 6 changed lines
+  code/r6_local/: not in 10-28 (local copy of r6_realrobot, created 10-30; attempt.py:20)
+
+== Changes after 10-28 that are active today (source: file:line; dates from code comments)
+  10-30  APPROACH_MM 25 -> 12 (attempt.py:30); r6_local copy (attempt.py:20); needle_detect --radius-mm 8.5 11.0 (attempt.py:113)
+  11-04  (date 推断 from session notes; these code comments carry times only) relaxed gates: TRACK_GATE_MM 6.0 (attempt.py:32), C_OFF_SHIFT_MAX_MM 16 (attempt.py:33), HANDOVER 15 mm/30 deg (attempt.py:31),
+         r6_perceive checks flat<=50 deg, R 5-14 mm, arc 70-270 deg (r6_local/r6_perceive.py:72), MIN_METAL 0.85 -> 0.6 (autotpl.py:21)
+  11-04  autotpl second pass with pad-colour difference (autotpl.py:44); aim point GRASP_TOOL_MM (attempt.py:34); OFF_TOOL_PRIOR_MM (attempt.py:43)
+  11-04  VERTICAL_DESCENT default on (attempt.py:38, used attempt.py:81,351)
+  11-04  roll model click_tool_model (attempt.py:39-41,75-77)
+  11-04  fix A early contact: early_steps=4, early_ins=0.20 (attempt.py:405, rig.py descend_until_contact); contact thresholds CONTACT (rig.py:31)
+  11-04  fix B thread filter 60 px, near<=90 / far>=150 (r6_local/needle_detect.py:263,266)
+  11-06  ROLL_A_MM/ROLL_E_XY_MM refit for today's calibration (attempt.py:41; backup attempt.py.bak_before_roll1106; A_check/fit_roll_1106.py), user OK before freeze
+
+== Calibration in force (redone today before freeze because the ECM SUJ moved)
+  C_r6cal 12:40: gate pass, test 2.70/2.29/1.05 mm (errors along camera Z; lateral <= 0.11 mm), train rms 0.31 (C_r6cal/calibration_r6.json, STATUS)
+  D_pad/pad.json: FS plane, margin 2 mm, base tip height 8.9 mm (D_pad/STATUS)
+  frozen setup joints: C_r6cal/calibration_tcp.json 'frozen' (ecm_js, suj_psm1). If ECM/SUJ move: stop and ask (no recalibration during trials).
+
+== Pre-freeze shakedown attempts (NOT trials, not in trials.csv)
+  A01 12:5x: quality stop before motion, needle_detect fused needle+thread (F_attempts/A01_run.log), 0 commands
+  A02 12:53: completed, contact at 1 mm-descent step 6 (trial_state descend_contact_step_1mm), needle held (F_attempts/A02_Prep); ran with the refit roll constants
+
+== sha256 of frozen files
+8f0785f16a41ec64ca6257c11469769c6eb9c1ba2524f9ab2e70053b739462b6  code/attempt.py
+88477823dcd1268660c5d8b9a22fe24d0457724a249f123f5b0422e31f9773f8  code/autotpl.py
+9a13c28f7b4f2e19ef8d39701c5738621e55e8d2d7918c52d00c4638eec8d4d7  code/calib.py
+977b7f77093c801c05867d4c3bd877e74c5052f3934dbf18c629bfa9e48f67d7  code/clickgui.py
+cbc5da22d48f2512247e691aebeca9bbb277ca2570110f2ac05bef3aee116d4d  code/cp_step.py
+7cdaaef6bfc03af8f8eeb6dfc115f1374e1743b1d175f4ab87451ed06bd95967  code/jaw_set.py
+9e4bc652a75046626fbe667149dd69bd0abb255d09d11874f12863c83c0e4eda  code/jaw_track.py
+c6fcb7734c89e5029be27ebd12c71117caf2c14d5f9444ad1f684d3a3014ce14  code/nudge_cam.py
+e52e02b01c3de641e9a262f15912175ca9969024dba65cd1d0659852e8a5aa97  code/recover_to_base.py
+180cbeddff020a64970e2b29b5f48fc8736121e98cfac63539ae0f39d1046552  code/replay_reach_pad_1515.py
+beb752688a5d382cbaf1d6dd203251ef97adb16248bead8f5890605271183fa6  code/replay_tpl_1428.py
+b952c93aea4f99513ea7b2080acb8119703b952e0c5829e536ab562025e017ed  code/replay_track_1450.py
+eda3a0b32bdd8171c7c90c49082d0a7db949a0470500ac80f9a300ae4920897d  code/retract_ins.py
+83e6bca73fc497eaf9fd711c1e1d82d620dcc1c9bebff4851efe55091d00d9bd  code/rig.py
+d431b6f2aa0521def65c0c627e8dcccd883252568657297ff72e8451b6df19ed  code/selftest_kin_1500.py
+4baeda5e89e37297f940bf2b86b16059f4f6492064e520d3fbb7d11fc674b307  code/session_driver.py
+203d89f0a18a16109b945dd7bfbcc74b59a878138a3a991e51974a21b53af757  code/set_joint.py
+f8515b22e9c6541d62e12026a50192a1150829e55925834c716a532631a38cda  code/support_map_1600.py
+55c50ce6b9798c3fc186547fbce6f6db57a8419a6682fce0208ce28bf594a020  code/watchdog.py
+1a3532ca1b192ff364256176c09283b32ad8019c2ce8fba7703c614f569116bc  code/r6_local/needle_detect.py
+9181a7b0d94a6527cf49515bdd8b80d2a4e3b0e91da686f0244a828003a1e05d  code/r6_local/r6_beta.py
+266e422f4b596897e557db3423d49bb2a7ad27022f070f0c1bc3082819286293  code/r6_local/r6_calib.py
+e8d41424edb2509bc64388235e105b8363fdd8541cafab3cce7c7533aeac204c  code/r6_local/r6_effort_probe.py
+f30e8ace66acc13e2a42152ad30d583780b5318048cf5baf33431bf1ab95e8de  code/r6_local/r6_fs_infer.py
+6d3459846d62600476d160f61ced9f3f0e80c6de4cb1e8e39ed44ad3ee1118fe  code/r6_local/r6_grasp.py
+275a005038c1b452d0d043f5de256260b9092f825379361fefdddff947a6a024  code/r6_local/r6_lift_axis.py
+0a85c80ed0517a9807fa94fbd26a7fb405d67d2db3c45cd43b8a01f11ad859a7  code/r6_local/r6_perceive.py
+7eddf65188bb13de2c6ffa44aa24670374e01d58589f828e018ca76ff1c9c054  code/r6_local/r6_record.py
+3b218016cdecc4632e7c643dc2d6a82f96a3185a85d5382a45e36998f704d030  code/r6_local/r6_reuse_perception.py
+18b962b54419103b0b6819c58c341d4c6b8abf85dab2866c4d8ee4cd11c26b33  code/r6_local/r6_snap.py
+4c34e3b6223ba8a752787a65b63ee2be1f1909f02cc9f0be6327ba6194515f43  G_place/grasp_hold_norl.py
+6623f41f26f674f1ecd91c8155a52c91ceabb9c26dc6dc412660345d4b52c84f  G_place/release_and_home.py
+7cb8101e7a9a0dd82303bcc4e95a48b26c49dea6820cb69a2ba0100e330d5074  G_place/check_rig.py
+8ccc0ba8cd73349b8600002ea5451f71220a15cdfc883a47a9e6a7746bf4a587  C_r6cal/calibration_tcp.json
+d2ea573d3e52433b5a2fb9b1d4cb2384dd68df7f7dcdd3994151f29d67cbb22c  C_r6cal/calibration_r6.json
+9f3a988d462acc71d62326291100089c0ad90abcfe40161d30fccf7ec54df8d9  C_r6cal/manifest.json
+fb56ebf0636fb2be41541b59563f29fb92a7f4fb774e35bcec8c36b96e677cb9  D_pad/pad.json
+
+== Conditions (designed by the agent at the user's request 2026-11-06 "先不用rl ... 你自己设计吧"; no RL so there is no start cell)
+  Start for every trial: calibration base pose (C_r6cal/manifest.json base_js), jaw closed, reached by release_and_home.py.
+  A (baseline): needle N1 = where it lay for the pre-freeze check (A_check/pre_p1.png): right of the jaw, arc centre ~(800,600) px right image, tip up-left near (730,515), swage lower right near (890,680).
+  B: needle N2 = flat pad upper right, arc centre ~(1050,560) px, rotated ~90 deg vs N1 (tip toward the lower right, swage toward the left). Reference photo trials/N2_ref.png once placed.
+  Order A-B-A-B..., T01..T10 first (5 per condition), more if time allows. Per trial dir trials/Tnn (Tnn_top.png + link data -> F_attempts/A1nn_Prep).
+  Result S/SS/F given by the user on the spot; PER/SAF/HW rows count as F.
+
+== DEVIATION 1 (2026-11-06 14:02:22, user request after T08: "这次取消这个限制看能不能抓起来")
+  attempt.py: env SKIP_SHIFT_STOP (default "0" = frozen behaviour unchanged). With SKIP_SHIFT_STOP=1 the pre-close needle check
+  (attempt.py needle_shift -> QualityStop "needle moved / unverifiable before closing") only logs and the jaw closes anyway.
+  Backup: code/attempt.py.bak_before_skipshift.  Trials run with SKIP_SHIFT_STOP=1 are marked in trials.csv (separate condition).
+  new sha256: 24d96962566268693e84a1a25539a232eccff20bd2fb6a102034f496eacb0e38  code/attempt.py
+
+== DEVIATION 1 REVERTED (2026-11-06 14:26:01, user: 恢复成冻结版): code/attempt.py restored from attempt.py.bak_before_skipshift; sha256 equals the frozen list again (8f0785f16a41ec64...). Switch version kept as code/attempt.py.with_skipshift. Only T09 ran with SKIP_SHIFT_STOP=1.
+
+== Change after freeze (2026-11-06 16:27, user: "改吧。不要单独计数" -> trials keep one count, T01..)
+  code/autotpl.py auto_template_checked: when the blade tips are found but fail the roll-model trust gate (> 4 mm) in both passes,
+  the prior-based (fallback) template is now computed (passes 3/4, no_tips=True) instead of stopping. Cause: T19 (A119) stopped with
+  tips 8.7 mm from the model although the fallback, used by every successful trial today, works there. No threshold changed.
+  Offline replay over all recorded open25 frames (scratchpad replay_checked.py): A02, A101-A117 unchanged (same pass/mode/feature);
+  A119 now passes (pass 3 fallback); A118 still fails (no metal patch near the prior). Backup: code/autotpl.py.bak_before_untrusted_fallback_1106
+  Trials from T20 on (16:27:56, after the 16:26:47 edit) run with this change; T20 itself used pass 1 fallback (unchanged path).
+  sha256 new: a909ff7ca9fe1cc20ae446827d98e1f08f327bd133cf0004da5c71d1eeb1a474  code/autotpl.py  (frozen value 88477823... above)
+
+== Recalibration (2026-11-06 ~17:00, user: "重新做calibration然后跑整体的pipeline从approach到grasp到placing")
+  Cause: the user moved the ECM (yaw -2.0 deg, pitch -0.5 deg) and set a new scene (tissue ~72 mm). Old calibration kept in C_r6cal_1240/, D_pad_1240/.
+  New C_r6cal: base = old pose + cp_step (0,0,6)+(0,0,6)+(4,0,0)+(0,5,0) ECM mm; try a (feature on the thin serrated blade) failed, archived in C_r6cal/base_moves/try_a.
+  try b: feature = solid block at the start of the serration (670,630), pin (595,700); all-points fit test 3.41/1.36/1.81 (gate fail, kept as calibration_r6_all_train_FAILED.json);
+  DEVIATION: training point g06 excluded (left NCC 0.62, the only one < 0.75) -> test 0.28/0.34/0.28 mm, train rms 0.17, sv 1.19/1.08/0.97, gate pass. pad.json: rms 0.19, base tip height 5.9 mm.
+  Roll model refit on new roll_data (A_check/collect_roll.py, 58 cmds; A_check/fit_roll_1106b.py): a [3.87,0.18,-6.53], e_xy [2.11,0.90]; written into code/attempt.py
+  (backup attempt.py.bak_before_roll1106b). sha256 new: c9522118732753b90de4023b3ff8ff3d85d095420b99247a87fd83edd8f04a7f  code/attempt.py
+
+== 2026-11-08 block 3 (PSM1 SUJ moved ~364 mm -> recalibration; old C_r6cal_1700 / D_pad_1700)
+  C_r6cal 17:05: test 0.81/0.56/0.42 mm, rms 0.30, sv 1.16/1.02/0.89 (grid try1 aborted: J from 2 mm probes underscaled, replaced by its polar rotation; try1/).
+  Base raised 7 mm along the pad normal after fspad oriented the normal into the pad (model TCP 2 mm below the FS plane at the original base); calibration_tcp_base0.json = before.
+  D_pad: base tip height 2.7 mm, rms 0.21. Roll refit A_check/fit_roll_1108.py (roll_data_1108, 58 cmds): a [5.19,0.51,-7.15] e [1.59,1.32], LOO 16 px (1106b values 42 px).
+  attempt.py (user "都改"): new ROLL constants + opt-in VERTICAL_GRASP=1 (wrist(): rotate about the tip so the jaw axis is along the perception normal, y across the needle).
+  Unset VERTICAL_GRASP = previous path. Offline selftest (FakeRigIO, fixture C_calib/scene0 from 11-04): A08 completed in both modes; V=1 final jaw-normal angle 0.0 deg, y-tangent 90 deg;
+  the later 'hover tracking failure' sub-test fails identically in both modes (stale assertion, tracking failure relaxed 11-04). Backup code/attempt.py.bak_before_1108.
+  sha256 new: 770f577b73072acea9f12e13eacaf399b957bbbcda9a40d52c11cce6280ec840  code/attempt.py

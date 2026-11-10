@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+"""READ-ONLY. Demo needle (right image) rotated in the image by the site's rotation, drawn (a) at the target over the entry sticker, (b) re-anchored on the current tip, to compare shape."""
+import json, sys
+import numpy as np, cv2
+FX, CX, CY = 1860.724932, 690.538345, 576.803638; FB = FX * 5.4476353950418295
+d, tip = sys.argv[1], np.array(json.loads(sys.argv[2]), float); out = sys.argv[3]; mj = sys.argv[4] if len(sys.argv) > 4 else "m_set2/measure.json"
+demo = np.array([(722, 567), (696, 625), (715, 668), (753, 685), (800, 693), (850, 690), (890, 682)], float); so = json.load(open("m0/measure.json"))["stickers"]; en = so[1] if so[1]["area"] < so[0]["area"] else so[0]; ex = so[0] if en is so[1] else so[1]; e0 = np.array(en["uv"]); x0 = np.array(ex["uv"])
+sn = json.load(open(mj))["stickers"]; e1 = np.array(sn[0]["uv"]); x1 = np.array(sn[1]["uv"]); a0 = np.arctan2(*(x0 - e0)[::-1]); a1 = np.arctan2(*(x1 - e1)[::-1]); rot = a1 - a0; c, s = np.cos(rot), np.sin(rot); Rm = np.array([[c, -s], [s, c]]); scale = np.array(en["cam"])[2] / np.array(sn[0]["cam"])[2]
+print("site rotation in the image %.1f deg, scale %.3f" % (np.degrees(rot), scale)); arc = (demo - e0) @ Rm.T * scale; tgt = e1 + arc; R = cv2.imread(d + "/right_rect.png"); o = R.copy(); cv2.polylines(o, [np.int32(tgt)], False, (0, 255, 0), 2); cv2.circle(o, tuple(np.int32(tgt[0])), 6, (0, 255, 0), 2); anch = tgt - tgt[0] + tip; cv2.polylines(o, [np.int32(anch)], False, (0, 255, 255), 1); cv2.circle(o, tuple(np.int32(tip)), 6, (0, 255, 255), 1)
+print("target tip uv", np.round(tgt[0], 1).tolist(), "target tail uv", np.round(tgt[-1], 1).tolist(), "tip->tail angle %.1f deg length %.0f px" % (np.degrees(np.arctan2(*(tgt[-1] - tgt[0])[::-1])), np.linalg.norm(tgt[-1] - tgt[0]))); cv2.imwrite(out + "/overlay2d.png", o); x0c, y0c = int(max(0, min(tip[0], tgt[0, 0]) - 90)), int(max(0, min(tip[1], tgt[0, 1]) - 90)); cv2.imwrite(out + "/overlay2d_crop.png", cv2.resize(o[y0c:y0c + 330, x0c:x0c + 560], None, fx=2.2, fy=2.2, interpolation=cv2.INTER_CUBIC))

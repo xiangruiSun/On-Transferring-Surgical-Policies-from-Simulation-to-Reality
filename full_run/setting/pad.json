@@ -1,0 +1,15 @@
+{
+ "normal": [
+  0.001096993935712125,
+  0.07573810930625954,
+  -0.9971271410422134
+ ],
+ "d": 0.0896696682014623,
+ "n_points": 13257,
+ "inlier_frac": 0.4279764979338843,
+ "max_resid_mm": 0.4734006575721683,
+ "rms_mm": 0.2772114435752606,
+ "margin_mm": 2.0,
+ "base_tip_height_mm": 5.097945603706632,
+ "source": "FS plane (~/rl_live/full_run_1109/setting/base_snap, phantom moved after calibration) mapped with calibration_tcp.json (pin-corrected); shifted margin_mm toward free space; code/pad_from_snap_1109.py"
+}
