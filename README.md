@@ -1,4 +1,55 @@
-# Fully automatic reach -> grasp -> place on the dVRK (sim-to-real suturing policy)
+# On Transferring Surgical Policies from Simulation to Reality: Perception, Calibration, and Safety Control
+
+**Xiangrui Sun**†, **Jiaming Wen**†, **Anqi Liu**\*, **Adnan Munawar**\*
+
+Laboratory for Computational Sensing and Robotics (LCSR), Johns Hopkins University, Baltimore, Maryland, USA
+
+† equal contribution, shared first authorship  \* corresponding authors
+
+> **Status:** submitted to the *Journal of Medical Robotics Research* (JMRR).
+
+**[Paper (PDF)](paper/On_Transferring_Surgical_Policies_from_Simulation_to_Reality.pdf)** | **[Demo video (YouTube)](https://youtu.be/3MHfJZOGouA)**
+
+[![Demo video: On Transferring Surgical Policies from Simulation to Reality](https://img.youtube.com/vi/3MHfJZOGouA/maxresdefault.jpg)](https://youtu.be/3MHfJZOGouA)
+
+## Abstract
+
+Although surgical simulation provides an effective environment for policy development, transferring
+learned behaviors to physical robots remains challenging. We present a modular framework for
+deployment on a physical da Vinci Research Kit (dVRK), using reinforcement-learning (RL) suturing
+policies trained in SurgicAI, a simulation-based surgical policy learning platform, as a case study.
+Directly transferring simulation-trained policies to the physical robot using only
+observation–action conversion, without additional deployment modules, resulted in 0% task success in
+the tested configurations. Transferring these policies to the physical dVRK requires addressing gaps
+in stereo perception, camera–robot calibration, geometric alignment, safety-constrained Cartesian
+control, and task verification. This work introduces dedicated deployment modules to mitigate these
+gaps. Following exploratory refinement, an operator visually confirmed pre-insertion alignment of the
+retained needle in 29 of 30 placing trials (96.7%). Heavy needle occlusion occurred in 11 trials.
+After the Reach policy brings the instrument to the needle, grasping uses no learned policy: a
+perception-guided geometric procedure aligns the jaws, descends, closes, and lifts, and it retained
+the needle in 40 of 50 final trials (80%). Separating policy-specific observation–action mappings
+from physical deployment modules provides a modular framework for integrating other compatible
+surgical policies. These results demonstrate the feasibility of transferring simulation-trained
+surgical policies to the physical dVRK by addressing real-world perception, calibration, and control
+challenges.
+
+**Keywords:** surgical robotics; sim-to-real transfer; reinforcement learning; dVRK; needle grasping;
+stereo vision; robot calibration.
+
+## Citation
+
+```bibtex
+@unpublished{sun2026transferring,
+  title  = {On Transferring Surgical Policies from Simulation to Reality: Perception, Calibration, and Safety Control},
+  author = {Sun, Xiangrui and Wen, Jiaming and Liu, Anqi and Munawar, Adnan},
+  note   = {Submitted to the Journal of Medical Robotics Research},
+  year   = {2026}
+}
+```
+
+---
+
+## Code: fully automatic reach -> grasp -> place on the dVRK (sim-to-real suturing policy)
 
 Code of the automation pipeline used on the dVRK (PSM1 + ECM stereo endoscope), state of 2026-11-10.
 One command runs a whole trial with no operator clicks:
