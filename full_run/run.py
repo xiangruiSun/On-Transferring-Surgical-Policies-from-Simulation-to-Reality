@@ -29,6 +29,7 @@ SITE = HERE + "/setting/site/measure.json"
 CAL = S1 + "/C_r6cal/calibration_tcp.json"
 FS_DIR = os.path.expanduser("~/Desktop/surgicai_grasp_integration/surgic_ai_deployment_unpublished/deploy")
 ENV = f"source {S1}/trials/env.sh; export NEEDLE_GREY_VMAX=235; "   # VMAX=235: washed-out pad, used for all 11-09 trials
+PLACE_TOL = (HERE + "/tools/") if os.environ.get("PLACE_TOL") == "1" else ""; _TOL = "_tol" if PLACE_TOL else ""   # 2026-11-10 18:4x: PLACE_TOL=1 -> tools/rot_tip_tol.py / phase2_tol.py (wrist settle tolerance 2.5 deg); unset = S1/P_place originals
 TRIAL = os.environ.get("TRIAL", "current")              # output folder name: trials/$TRIAL
 OUT = f"{HERE}/trials/{TRIAL}"
 
@@ -119,10 +120,10 @@ def main():
     elif st == "rot":                                   # ---- rotate about the tip (axis from the plan)
         name, deg, tipR, body, tipZ = a[0], float(a[1]), uv(a[2]), uv(a[3]), float(a[4]); frames = a[5] if len(a) > 5 else None
         ax = json.load(open(OUT + "/rot_plan.json"))["axis"]; frames = frames or sorted([d for d in os.listdir(OUT) if os.path.exists(f"{OUT}/{d}/right_rect.png") and not d.endswith("_dry")], key=lambda d: os.path.getmtime(f"{OUT}/{d}/right_rect.png"))[-1]
-        move_dry_then_send(f"rot_tip.py --measure {SITE} --deg {deg} --axis {ax[0]:.4f} {ax[1]:.4f} {ax[2]:.4f} --tipR {tipR[0]:.0f} {tipR[1]:.0f} --body {body[0]:.0f} {body[1]:.0f} --tipZ {tipZ} --frames {OUT}/{frames}", name)
+        move_dry_then_send(f"{PLACE_TOL}rot_tip{_TOL}.py --measure {SITE} --deg {deg} --axis {ax[0]:.4f} {ax[1]:.4f} {ax[2]:.4f} --tipR {tipR[0]:.0f} {tipR[1]:.0f} --body {body[0]:.0f} {body[1]:.0f} --tipZ {tipZ} --frames {OUT}/{frames}", name)
     elif st == "down":                                  # ---- tip to entry + H along the normal
         name, h, tR, tL = a[0], float(a[1]), uv(a[2]), uv(a[3]); extra = " --ins-eff 0.8" if h >= 15 else ""
-        move_dry_then_send(f"phase2.py --tipR {tR[0]:.0f} {tR[1]:.0f} --tipL {tL[0]:.0f} {tL[1]:.0f} --h {h}{extra} --measure {SITE}", name)
+        move_dry_then_send(f"{PLACE_TOL}phase2{_TOL}.py --tipR {tR[0]:.0f} {tR[1]:.0f} --tipL {tL[0]:.0f} {tL[1]:.0f} --h {h}{extra} --measure {SITE}", name)
     elif st == "metric":                                # ---- final check: tip read on the final snapshot -> height / lateral
         tR, tL = uv(a[0]), uv(a[1]); last(sh(f"python3 tip_metric.py {SITE} {tR[0]} {tR[1]} {tL[0]}"), 3)
     elif st == "release": last(sh("bash trials/release.sh", cwd=S1, check=False), 3)

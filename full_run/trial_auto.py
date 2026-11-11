@@ -2,7 +2,8 @@
 """One full trial, reach -> grasp -> place, FULLY AUTOMATIC (2026-11-10): no clicks, no questions.
 
     cd ~/rl_live/full_run_1109 && python3 trial_auto.py            # needle lying flat on the pad, in view, away from the jaw
-    python3 trial_auto.py --hold                                   # keep holding the needle at the end (no release / back to base)
+    python3 trial_auto.py --release                                # release + back to the base at the end / at a stop (default since 11-10 18:4x: keep holding, no automatic release)
+    python3 trial_auto.py --resume <run>                           # needle already held (stopped run): new snapshot, re-plan, continue the placing
 
 Same robot steps as trial.py / trials/T01 (run.py stages, frozen S1 code, every moving stage dry-run first); the operator's clicks
 are replaced by detectors:
@@ -11,7 +12,7 @@ are replaced by detectors:
   * tip (right + left) and the body point before every placing move: tools/held_needle.py (FoundationStereo disparity vs the
     pre-grasp snapshot -> thin structure attached to the instrument -> far end; tip disparity from NCC along the needle).
     Offline on trials/T01 (5 stages): right tip within 0-5 px of the operator's clicks.
-Automatic stops (after a grasp attempt: release + back to the base, unless --hold): rig not ready, grasp failed, a detector not confident,
+Automatic stops (failed grasp: open + back to the base; needle grasped: keep holding, unless --release): rig not ready, grasp failed, a detector not confident,
 tip jump after a rotation > 600 px, tip height / lateral offset after a 'down' move not where it was commanded, any guard of run.py.
 Verdict (machine): SUCCESS if the final tip is within 2 mm lateral of the sticker centre and 0.5 .. 6.5 mm above it (commanded 3.5).
 """
@@ -26,7 +27,8 @@ ROT_STEP = 35.0; HEIGHTS = (15.0, 8.0, 3.5); H_TOL = {15.0: 4.5, 8.0: 3.0}; LAT_
 ENVSH = f"source {S1}/trials/env.sh; export NEEDLE_GREY_VMAX=235"
 FS_DIR = os.path.expanduser("~/Desktop/surgicai_grasp_integration/surgic_ai_deployment_unpublished/deploy")
 SITE = HERE + "/setting/site/measure.json"; CAL = S1 + "/C_r6cal/calibration_tcp.json"
-HOLD = "--hold" in sys.argv
+RELEASE = "--release" in sys.argv   # 2026-11-10 18:4x user: "do not write auto-release, you should move to placing after grasping" -> a grasped needle is NEVER released automatically (stop or finish: the arm stays, jaw closed) unless --release is given
+HOLD = not RELEASE
 RESUME = sys.argv[sys.argv.index("--resume") + 1:][:2] if "--resume" in sys.argv else None   # --resume <run dir name>: needle already held, new snapshot (interrupted run), continue from the placing plan
 ROT_CLEAR = 3.0   # mm above the pad plane of S1/D_pad (= 5 mm above the fitted surface) for the jaw during a rotation
 MAX_ROT = 180.0   # deg; 2026-11-10 user "发送": was 110 (A175 119, A176 176 deg in the 11-10 setup)
@@ -42,6 +44,7 @@ def bash(cmd, cwd=None, timeout=900):
 def run(stage_args, trial, must_pass=True):
     """one run.py stage; prints the tail of its output; returns it."""
     env = dict(os.environ, TRIAL=trial); env.pop("NEEDLE_TAIL_HINT", None)
+    if os.path.exists(HERE + "/tools/rot_tip_tol.py"): env["PLACE_TOL"] = "1"                                  # 2026-11-10 18:4x: wrist settle tolerance 2.5 deg while a needle is clamped (A188 / A189: yaw 1.03 deg off under the clamp load)
     if os.path.exists(HERE + "/setting/roll_model.json"): env["GRASP_SH"] = HERE + "/tools/grasp_rl_roll.sh"     # roll model fitted for the current calibration
     p = subprocess.run(["bash", "-c", f"{ENVSH}; python3 {HERE}/run.py {stage_args}"], env=env, capture_output=True, text=True)
     out = "\n".join(l for l in (p.stdout + p.stderr).splitlines() if not l.startswith("$") and "autocast" not in l and "Warn" not in l)
@@ -180,7 +183,7 @@ def main():
         # 3. rotations about the tip
         s = np.r_[0, np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))]; ib = int(np.argmin(np.abs(s - (s[-1] - 45))))
         tipR, body, Z = pts[-1], pts[ib], FB / uvd[-1, 2]; last, done, k, det = s0, 0.0, 1, None
-        cap = ROT_STEP
+        cap = ROT_STEP; settle_retry = 0
         while total - done > 0.5:
             step = min(cap, total - done)
             for vk in range(3):                                      # tip near the image border (e.g. after a lift toward the camera) -> shift it toward the centre
@@ -199,12 +202,27 @@ def main():
             if "IK / margins" in out:                                # A178: the 3rd 25 deg step needed wrist pitch 78.7 deg (margin 1.3 < 3) -> smaller steps, then go on with what was reached
                 if step > 6.0: cap = step / 2; say(f"rotation step of {step:.1f} deg leaves the joint margins -> try {cap:.1f} deg"); continue
                 say(f"wrist limit reached {total - done:.1f} deg before the planned orientation -> continue with the orientation reached"); break
+            if "did not settle" in out and settle_retry < 3:           # A188 (18:34): 'joints did not settle at 5/19' (rot_tip sends one move_jp per step, a message can get lost) -> the rotation is partly done: look again, re-plan from the pose reached (as --resume does), go on
+                settle_retry += 1; sN = f"rs{k}{'abc'[settle_retry - 1]}"; say(f"rotation step did not settle -> new snapshot {sN}, re-plan (retry {settle_retry})")
+                run(f"snap {sN} --fs", trial); pts, _ = needle_points(out_dir, sN, bg); run(f"needle {sN} " + " ".join(fmt(p) for p in pts), trial)
+                total = json.load(open(out_dir + "/rot_plan.json"))["deg"]; uvd = np.array(json.load(open(out_dir + "/uvd.json"))); say(f"rotation still needed {total:.1f} deg")
+                if total > MAX_ROT: stop(f"planned rotation {total:.0f} deg > {MAX_ROT:.0f}")
+                s = np.r_[0, np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))]; ib = int(np.argmin(np.abs(s - (s[-1] - 45))))
+                tipR, body, Z = pts[-1], pts[ib], FB / uvd[-1, 2]; last, done, det = sN, 0.0, None; continue
             if "done: wrist" not in out: stop("stage 'rot' stopped")
             last = f"r{k}"; det = tip_of(out_dir, last, bg, prior=tipR)
             jump = float(np.linalg.norm(np.array(det["tipR"]) - np.array(tipR)))
             if jump > 26 * step + 100: stop(f"tip moved {jump:.0f} px during a {step:.0f} deg rotation about the tip (> {26 * step + 100:.0f})")   # A173: 302 px in one 25 deg step with a correct detection (T01: ~150)
             tipR, body, Z = det["tipR"], det["bodyR"], FB / det["disp"]; done += step; k += 1
         if det is None: det = tip_of(out_dir, s0, bg, prior=tipR)
+        # 3b. 2026-11-10 19:0x (A190: tip 28.4 mm beside the entry after the rotations, phase2 refuses moves > 25 mm): bring the tip over the entry in steps of <= 8 mm at the height it has, looking again after each
+        _A = np.array(json.load(open(CAL))["M"])[:3]
+        for sk in range(5):
+            e_, n_ = site(); d_ = e_ - np.asarray(det["tip_cam"]); d_ = d_ - (d_ @ n_) * n_; lat = float(np.linalg.norm(d_))
+            if lat <= 18.0: break
+            if sk == 4: stop(f"tip still {lat:.1f} mm beside the entry after 4 approach steps")
+            dcp = (d_ / lat * min(8.0, lat - 12.0)) @ np.linalg.inv(_A); say(f"tip {lat:.1f} mm beside the entry -> move the tool {np.round(dcp, 1).tolist()} mm (ECM) toward it")
+            run(f"shift t{sk} {dcp[0]:.2f} {dcp[1]:.2f} {dcp[2]:.2f}", trial); det = tip_of(out_dir, f"t{sk}", bg, prior=det["tipR"])
         # 4. down to entry + 15 / 8 / 3.5 mm
         for h in HEIGHTS:
             name_h = {15.0: "rc1", 8.0: "c8", 3.5: "c35"}[h]
@@ -214,19 +232,29 @@ def main():
                     say(f"move to {h} mm did not settle -> new snapshot, retry {att + 1}"); nm = f"{name_h}_retry{att + 1}"; run(f"snap {nm} --fs", trial); det = tip_of(out_dir, nm, bg, prior=det["tipR"]); continue
                 if "STOPPED" in out or "did not pass" in out or "guard stop" in out or "command failed" in out: stop(f"stage 'down' to {h} mm stopped")
                 break
-            det = tip_of(out_dir, name_h, bg, prior=det["tipR"]); hh, lat = height_lateral(det["tip_cam"])
+            # 2026-11-10 19:2x (demo attempt A191: at entry + 15 mm the jaw was outside the right image edge -> held_needle "no ... attached to the instrument" although the needle was in full view):
+            # after a pure translation the tip phase2 itself predicts ("expected tip", 6 px from the real one on A191 rc1) is used when the detector finds nothing
+            prev = det; d_ = f"{out_dir}/{name_h}"; fs(d_); r_ = HN.detect(d_, bg, prev["tipR"], d_ + "_needle.png"); json.dump(r_, open(d_ + "_needle.json", "w"), indent=1)
+            m_ = re.findall(r"expected tip at right \[([\d.]+), ([\d.]+)\] left \[([\d.]+), ([\d.]+)\]", out)
+            if r_.get("ok"): det = r_
+            elif m_:
+                uR, vR, uL, vL = map(float, m_[-1]); Z_ = FB / (uR - uL); det = dict(tipR=[uR, vR], tipL=[uL, vL], tip_cam=[(uR - CX) * Z_ / FX, (vR - CY) * Z_ / FX, Z_], disp=uR - uL, predicted=True)
+                say(f"{name_h}: needle not found by the detector ({r_.get('why')}) -> tip predicted by the move itself: right ({uR:.0f},{vR:.0f}), left ({uL:.0f},{vL:.0f})")
+            else: stop(f"held-needle detector not confident on {name_h}: {r_.get('why')}")
+            hh, lat = height_lateral(det["tip_cam"]); say(f"{name_h}: tip {hh:.1f} mm above the entry, {lat:.1f} mm lateral" + (" (predicted)" if det.get("predicted") else ""))
             if h in H_TOL and (abs(hh - h) > H_TOL[h] or lat > LAT_TOL): stop(f"after the move to {h} mm the tip is {hh:.1f} mm above / {lat:.1f} mm beside the entry (tolerance +-{H_TOL[h]} / {LAT_TOL})")
         # 5. final metric + machine verdict
         hh, lat = height_lateral(det["tip_cam"]); run(f"metric {fmt(det['tipR'])} {fmt(det['tipL'])}", trial)
         ok = lat <= 2.0 and 0.5 <= hh <= 6.5
-        say(f"FINAL: tip {hh:.1f} mm above the entry, {lat:.1f} mm lateral -> {'SUCCESS' if ok else 'NOT a success'} (machine verdict)")
+        say(f"FINAL: tip {hh:.1f} mm above the entry, {lat:.1f} mm lateral -> {'SUCCESS' if ok else 'NOT a success'} (machine verdict" + (", tip position PREDICTED from the last move, not seen" if det.get("predicted") else "") + ")")
         json.dump(dict(height_mm=hh, lateral_mm=lat, success=bool(ok), tip=det), open(out_dir + "/result.json", "w"), indent=1)
         if ok:
             nums = [int(x[1:]) for x in os.listdir(HERE + "/trials") if re.fullmatch(r"T\d+", x)]; tn = f"T{max(nums + [0]) + 1:02d}"
             shutil.move(out_dir, f"{HERE}/trials/{tn}"); open(f"{HERE}/trials/{tn}/VERDICT.txt", "w").write(f"{name}: SUCCESS (machine: height {hh:.1f} mm, lateral {lat:.1f} mm)\n"); say("recorded as", tn); trial = tn
     except Stop as e:
         say("STOPPED:", e); open(out_dir + "/STOPPED.txt", "w").write(str(e) + "\n") if os.path.isdir(out_dir) else None
-        if grasped is not False and not HOLD: say("release + back to the base"); run("release", trial, must_pass=False)
+        if grasped is None or (grasped and RELEASE): say("release + back to the base" + (" (nothing grasped)" if grasped is None else "")); run("release", trial, must_pass=False)
+        elif grasped: say("needle kept in the jaw, arm stays where it is (no automatic release); continue with:  python3 trial_auto.py --resume " + name)
         return 1
     if not HOLD: say("release + back to the base"); run("release", trial, must_pass=False)
     return 0

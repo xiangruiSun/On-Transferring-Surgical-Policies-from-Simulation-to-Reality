@@ -1,0 +1,6 @@
+{
+ "feat_uv": [997, 248],
+ "pin_uv": [997, 248],
+ "pad_box_rows_cols": [410, 500, 430, 700],
+ "chosen": "2026-11-10 ~19:0x after the user moved the ECM again (pad ~102 mm from the camera, sticker right of centre). Base: jaw 0, wrist base joints (roll 1.555, pitch -0.076, yaw 0.125), cp_step +8 y, +7 z, +7 z, -2.5 x +3 y -> jaw tip ~9-10 mm above the working plane (FS), instrument top right, clear of the sticker and the needle. feature = pin = jaw pivot screw; pad box = flat pad left of centre (rms 0.14 mm; the phantom dips under the base tip)"
+}
