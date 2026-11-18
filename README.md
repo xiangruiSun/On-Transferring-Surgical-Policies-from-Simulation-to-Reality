@@ -8,9 +8,7 @@ Laboratory for Computational Sensing and Robotics (LCSR), Johns Hopkins Universi
 
 > **Status:** submitted to the *2027 International Symposium on Medical Robotics* (ISMR 2027), under review.
 
-**[Paper (PDF)](paper/On_Transferring_Surgical_Policies_from_Simulation_to_Reality.pdf)** | **[Demo video (YouTube)](https://youtu.be/3MHfJZOGouA)**
-
-[![Demo video: On Transferring Surgical Policies from Simulation to Reality](https://img.youtube.com/vi/3MHfJZOGouA/maxresdefault.jpg)](https://youtu.be/3MHfJZOGouA)
+**[Paper (PDF)](paper/On_Transferring_Surgical_Policies_from_Simulation_to_Reality.pdf)**
 
 ## Abstract
 
