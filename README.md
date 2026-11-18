@@ -6,7 +6,7 @@ Laboratory for Computational Sensing and Robotics (LCSR), Johns Hopkins Universi
 
 † equal contribution, shared first authorship  \* corresponding authors
 
-> **Status:** submitted to the *Journal of Medical Robotics Research* (JMRR).
+> **Status:** submitted to the *2027 International Symposium on Medical Robotics* (ISMR 2027), under review.
 
 **[Paper (PDF)](paper/On_Transferring_Surgical_Policies_from_Simulation_to_Reality.pdf)** | **[Demo video (YouTube)](https://youtu.be/3MHfJZOGouA)**
 
@@ -42,7 +42,7 @@ stereo vision; robot calibration.
 @unpublished{sun2026transferring,
   title  = {On Transferring Surgical Policies from Simulation to Reality: Perception, Calibration, and Safety Control},
   author = {Sun, Xiangrui and Wen, Jiaming and Liu, Anqi and Munawar, Adnan},
-  note   = {Submitted to the Journal of Medical Robotics Research},
+  note   = {Submitted to the 2027 International Symposium on Medical Robotics (ISMR 2027), under review},
   year   = {2026}
 }
 ```
